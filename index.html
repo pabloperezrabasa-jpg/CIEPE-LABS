@@ -371,6 +371,59 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);h
 @media(max-width:400px){
   .grid-4,.grid-3{grid-template-columns:1fr;}
 }
+
+/* ── ADMIN PANEL ── */
+.admin-wrap{display:flex;flex-direction:column;gap:20px;}
+.admin-hero{background:linear-gradient(135deg,#0A2E30,#17666A,#C4993A);
+  border-radius:12px;padding:28px 32px;color:white;position:relative;overflow:hidden;}
+.admin-hero::after{content:'🏛️';position:absolute;right:24px;top:50%;
+  transform:translateY(-50%);font-size:64px;opacity:0.15;}
+.admin-hero h2{font-family:'Cormorant Garamond',serif;font-size:28px;
+  font-weight:700;margin-bottom:4px;}
+.admin-hero p{font-size:13px;opacity:0.75;}
+.admin-hero .admin-date{font-size:11px;opacity:0.55;margin-top:8px;
+  font-family:'JetBrains Mono',monospace;}
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.lab-exec-card{background:var(--white);border-radius:10px;border:1px solid var(--border);
+  overflow:hidden;transition:all 0.2s;cursor:pointer;}
+.lab-exec-card:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(23,102,106,0.12);
+  transform:translateY(-2px);}
+.lab-exec-banner{height:6px;}
+.lab-exec-body{padding:16px 18px;}
+.lab-exec-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;
+  color:var(--teal-dark);margin-bottom:10px;line-height:1.3;}
+.lab-exec-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.les{background:var(--teal-pale);border-radius:6px;padding:8px;text-align:center;}
+.les .n{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;
+  color:var(--teal-dark);line-height:1;}
+.les .l{font-size:9px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:0.07em;margin-top:2px;}
+.lab-exec-footer{display:flex;justify-content:space-between;align-items:center;
+  padding-top:10px;border-top:1px solid var(--border);}
+.lab-exec-enter{font-size:11px;font-weight:600;color:var(--teal);text-decoration:none;
+  background:var(--teal-light);padding:4px 10px;border-radius:5px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;}
+.lab-exec-enter:hover{background:var(--teal);color:var(--white);}
+.informe-consolidado{background:var(--white);border-radius:10px;
+  border:1px solid var(--border);overflow:hidden;}
+.ic-lab-header{padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.ic-lab-header:hover{background:var(--teal-pale);}
+.ic-lab-title{font-size:14px;font-weight:600;color:var(--teal-dark);}
+.ic-lab-badge{font-size:10px;padding:2px 8px;border-radius:10px;}
+.ic-content{padding:16px 18px;display:none;}
+.ic-content.open{display:block;}
+.ic-section{margin-bottom:14px;}
+.ic-section-title{font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
+.ic-section-text{font-size:12px;color:var(--ink-mid);line-height:1.7;
+  background:var(--teal-pale);border-radius:6px;padding:10px 14px;
+  border-left:3px solid var(--teal);}
+.admin-readonly-badge{display:inline-flex;align-items:center;gap:5px;
+  background:var(--gold-light);color:var(--gold);border:1px solid var(--gold);
+  border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.06em;}
+
 </style>
 </head>
 <body>
@@ -851,7 +904,12 @@ async function startApp(session){
       }
     }
   }catch(e){}
-  goTo('backlog', document.querySelector('.nav-item'));
+  if(S.lab === 'admin'){
+    renderAdminSidebar();
+    goToAdmin('dashboard');
+  } else {
+    goTo('backlog', document.querySelector('.nav-item'));
+  }
 }
 
 // Auto-login via Firebase session persistence
@@ -1486,13 +1544,7 @@ function rZona(el,actions){
   <div class="card">
     <div class="card-head"><div class="card-title">🎵 Playlists del laboratorio — Spotify</div></div>
     <div class="card-body">
-      <div style="background:var(--gold-pale);border:1px solid var(--gold);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;" id="spotify-notice">
-        <span style="font-size:16px;flex-shrink:0">ℹ️</span>
-        <div style="font-size:12px;color:var(--ink-mid);line-height:1.6">
-          Spotify requiere que la app esté en un servidor web para cargar. <strong>Funcionará perfecto una vez desplegada en GitHub Pages.</strong>
-          Mientras tanto, podés abrir las playlists directamente en Spotify desde los botones de abajo.
-        </div>
-      </div>
+
       <div class="grid-3">
         <div>
           <div style="font-size:12px;font-weight:600;color:var(--teal-dark);margin-bottom:8px">🧠 Concentración</div>
@@ -2131,6 +2183,251 @@ function exportInformePDF(){
 
 // ════════════════════════════════════════════════════════════
 
+
+// ════════════════════════════════════════════════════════════
+// PANEL DE COORDINACIÓN ACADÉMICA
+// ════════════════════════════════════════════════════════════
+const ALL_LABS = ['bioetica','crimen','educacion','riesgo','ciencias','ia','etica','linpae'];
+
+function renderAdminSidebar(){
+  const nav = document.querySelector('.sidebar-nav');
+  if(!nav) return;
+  nav.innerHTML = `
+    <div class="nav-group"><div class="nav-group-label">Panel ejecutivo</div></div>
+    <div class="nav-item active" onclick="goToAdmin('dashboard',this)"><span class="ni">📊</span><span class="nl">Dashboard general</span></div>
+    <div class="nav-item" onclick="goToAdmin('informes',this)"><span class="ni">📋</span><span class="nl">Informes consolidados</span></div>
+    <div class="nav-group"><div class="nav-group-label">Acceso a laboratorios</div></div>
+    ${ALL_LABS.map(lab=>`
+      <div class="nav-item" onclick="goToAdminLab('${lab}',this)">
+        <span class="ni">${LAB_IDENTITY[lab]?.icon||'🔬'}</span>
+        <span class="nl" style="font-size:11px">${LAB_NAMES[lab]?.split('—')[0].trim()||lab}</span>
+      </div>`).join('')}
+  `;
+  // Update sidebar lab label
+  document.getElementById('sb-lab').textContent = 'Coordinación Académica';
+}
+
+function goToAdmin(section, el){
+  if(window.innerWidth<=768) closeSidebar();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('topbar-title').innerHTML = 
+    section==='dashboard' ? 'Panel Ejecutivo <span class="tlab">Coordinación Académica</span>'
+                          : 'Informes Consolidados <span class="tlab">Todos los Labs</span>';
+  const actions = document.getElementById('topbar-actions');
+  actions.innerHTML = '<span class="admin-readonly-badge">👁 Modo coordinación</span>';
+  const content = document.getElementById('content');
+  if(section==='dashboard') renderAdminDashboard(content);
+  else if(section==='informes') renderAdminInformes(content);
+}
+
+let _adminViewingLab = null;
+async function goToAdminLab(lab, el){
+  if(window.innerWidth<=768) closeSidebar();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  _adminViewingLab = lab;
+  const labName = LAB_NAMES[lab]||lab;
+  document.getElementById('topbar-title').innerHTML = 
+    `${labName} <span class="tlab">Vista de coordinación</span>`;
+  const actions = document.getElementById('topbar-actions');
+  actions.innerHTML = `
+    <span class="admin-readonly-badge">👁 Solo lectura</span>
+    <button class="btn-s" style="margin-left:8px;font-size:11px" onclick="goToAdmin('dashboard')">← Volver al panel</button>`;
+  // Load lab data temporarily for read-only view
+  const savedLab = S.lab;
+  const savedData = S.data;
+  S.lab = lab;
+  S.data = await getLabData(lab);
+  const content = document.getElementById('content');
+  renderAdminLabView(content, lab);
+  // Restore admin context
+  S.lab = savedLab;
+  S.data = savedData;
+}
+
+async function renderAdminDashboard(el){
+  el.innerHTML = `<div class="admin-wrap">
+    <div class="admin-hero">
+      <h2>Panel de Coordinación Académica</h2>
+      <p>Vista ejecutiva de todos los laboratorios CIEPE</p>
+      <div class="admin-date">Bienvenido/a, ${S.user} · ${new Date().toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--teal-dark);margin-bottom:4px">Estado de laboratorios</div>
+    <div class="lab-grid" id="admin-lab-grid">
+      <div class="empty"><div class="ei" style="font-size:24px">⏳</div><p>Cargando datos de laboratorios...</p></div>
+    </div>
+  </div>`;
+
+  // Load all labs data in parallel
+  const allData = await Promise.all(ALL_LABS.map(lab => getLabData(lab)));
+  const grid = document.getElementById('admin-lab-grid');
+  if(!grid) return;
+
+  grid.innerHTML = ALL_LABS.map((lab, i) => {
+    const d = allData[i];
+    const id = LAB_IDENTITY[lab] || LAB_IDENTITY.admin;
+    const tareas = (d.backlog||[]).length;
+    const enCurso = (d.backlog||[]).filter(t=>t.estado==='En curso').length;
+    const papers  = (d.papers||[]).length;
+    const fondos  = (d.fondos||[]).length;
+    const trabadas = (d.backlog||[]).filter(t=>t.estado==='Trabada').length;
+    return `
+    <div class="lab-exec-card" onclick="goToAdminLab('${lab}', null)">
+      <div class="lab-exec-banner" style="background:${id.gradient}"></div>
+      <div class="lab-exec-body">
+        <div class="lab-exec-name">${id.icon} ${LAB_NAMES[lab]||lab}</div>
+        <div class="lab-exec-stats">
+          <div class="les"><div class="n">${tareas}</div><div class="l">Tareas</div></div>
+          <div class="les"><div class="n" style="color:var(--c-papers)">${papers}</div><div class="l">Papers</div></div>
+          <div class="les"><div class="n" style="color:var(--c-fondos)">${fondos}</div><div class="l">Fondos</div></div>
+        </div>
+        ${trabadas>0?`<div style="font-size:11px;color:var(--c-backlog);font-weight:600;margin-bottom:8px">⚠️ ${trabadas} tarea${trabadas>1?'s':''} trabada${trabadas>1?'s':''}</div>`:''}
+        <div class="lab-exec-footer">
+          <div style="font-size:10px;color:var(--muted)">${enCurso} en curso</div>
+          <button class="lab-exec-enter" onclick="event.stopPropagation();goToAdminLab('${lab}',null)">Ver lab →</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function renderAdminInformes(el){
+  // Show trimester selector
+  const years = [new Date().getFullYear(), new Date().getFullYear()+1];
+  el.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--teal-dark);margin-bottom:4px">Informes Trimestrales Consolidados</div>
+      <div style="font-size:12px;color:var(--muted)">Vista de todos los laboratorios · Solo lectura</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px">Año</div>
+        <div class="pills" style="margin-bottom:0">
+          ${years.map(y=>`<div class="pill ${y===new Date().getFullYear()?'active':''}" onclick="loadAdminInformes(${y},'${TRIMESTRES[1].id}',this,'year')">${y}</div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px">Trimestre</div>
+        <div class="pills" style="margin-bottom:0">
+          ${TRIMESTRES.map(t=>`<div class="pill ${t.id===TRIMESTRES[1].id?'active':''}" onclick="loadAdminInformes(${new Date().getFullYear()},'${t.id}',this,'trim')">${t.label}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div id="admin-informes-body">
+      <div class="empty"><div class="ei">⏳</div><p>Cargando informes...</p></div>
+    </div>`;
+  loadAdminInformes(new Date().getFullYear(), TRIMESTRES[1].id, null, null);
+}
+
+let _adminYear = new Date().getFullYear();
+let _adminTrim = 't2';
+
+async function loadAdminInformes(year, trim, el, type){
+  if(type==='year'){
+    _adminYear = year;
+    document.querySelectorAll('.pills .pill').forEach(p=>{
+      if(!isNaN(p.textContent)) p.classList.remove('active');
+    });
+    if(el) el.classList.add('active');
+  } else if(type==='trim'){
+    _adminTrim = trim;
+    document.querySelectorAll('.pills .pill').forEach(p=>{
+      if(isNaN(p.textContent)) p.classList.remove('active');
+    });
+    if(el) el.classList.add('active');
+  } else {
+    _adminYear = year;
+    _adminTrim = trim;
+  }
+
+  const body = document.getElementById('admin-informes-body');
+  if(!body) return;
+  body.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Cargando...</p></div>';
+
+  const trimLabel = TRIMESTRES.find(t=>t.id===_adminTrim)?.label || _adminTrim;
+  const allData = await Promise.all(ALL_LABS.map(lab => getLabData(lab)));
+
+  body.innerHTML = ALL_LABS.map((lab, i) => {
+    const d = allData[i];
+    const id = LAB_IDENTITY[lab]||LAB_IDENTITY.admin;
+    const secciones = INFORME_SECCIONES.map(s => {
+      const val = (d.informe||{})[informeKey(_adminYear, _adminTrim, s.n)] || '';
+      return `<div class="ic-section">
+        <div class="ic-section-title">${s.n}. ${s.t}</div>
+        <div class="ic-section-text">${val ? val.split('\n').join('<br>') : '<span style="color:var(--muted);font-style:italic">Sin contenido ingresado.</span>'}</div>
+      </div>`;
+    }).join('');
+
+    const hasContent = INFORME_SECCIONES.some(s => 
+      (d.informe||{})[informeKey(_adminYear, _adminTrim, s.n)]
+    );
+
+    return `
+    <div class="informe-consolidado" style="margin-bottom:12px;">
+      <div class="ic-lab-header" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div>
+          <div class="ic-lab-title">${id.icon} ${LAB_NAMES[lab]||lab}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${trimLabel} ${_adminYear}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${hasContent
+            ? '<span class="badge b-green ic-lab-badge">✅ Entregado</span>'
+            : '<span class="badge b-red ic-lab-badge">⏳ Pendiente</span>'}
+          <span style="color:var(--muted);font-size:16px">▾</span>
+        </div>
+      </div>
+      <div class="ic-content">${secciones}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAdminLabView(el, lab){
+  // Read-only view of a lab — shows all sections but no edit/delete buttons
+  const id = LAB_IDENTITY[lab]||LAB_IDENTITY.admin;
+  const d = S.data;
+  el.innerHTML = `
+    <div class="lab-banner" style="margin-bottom:20px;">
+      <div class="lab-banner-bg" style="background:${id.gradient}"></div>
+      <div class="lab-banner-overlay"></div>
+      <div class="lab-banner-content">
+        <div class="lab-banner-name">${id.icon} ${LAB_NAMES[lab]||lab}</div>
+        <div class="lab-banner-meta">${id.desc} · Vista de coordinación</div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-bottom:20px">
+      <div class="stat"><div class="num">${(d.backlog||[]).length}</div><div class="lbl">Tareas totales</div></div>
+      <div class="stat" style="border-top-color:var(--c-papers)"><div class="num" style="color:var(--c-papers)">${(d.papers||[]).length}</div><div class="lbl">Papers en trabajo</div></div>
+      <div class="stat" style="border-top-color:var(--c-fondos)"><div class="num" style="color:var(--c-fondos)">${(d.fondos||[]).length}</div><div class="lbl">Fondos seguidos</div></div>
+    </div>
+    <div class="grid-2" style="gap:16px">
+      <div class="card">
+        <div class="card-head"><div class="card-title">✅ Tareas activas</div></div>
+        <div class="card-body" style="padding:8px 0">
+          ${!(d.backlog||[]).length ? '<div class="empty" style="padding:20px"><p>Sin tareas.</p></div>' : ''}
+          ${(d.backlog||[]).slice(0,8).map(t=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border)">
+              ${estadoBadge(t.estado)}
+              <span style="font-size:12px;flex:1">${t.tarea}</span>
+              ${prioBadge(t.prioridad)}
+            </div>`).join('')}
+          ${(d.backlog||[]).length>8?`<div style="padding:8px 16px;font-size:11px;color:var(--muted)">...y ${(d.backlog||[]).length-8} más</div>`:''}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📝 Papers en trabajo</div></div>
+        <div class="card-body" style="padding:8px 0">
+          ${!(d.papers||[]).length ? '<div class="empty" style="padding:20px"><p>Sin papers.</p></div>' : ''}
+          ${(d.papers||[]).map(p=>`
+            <div style="padding:8px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:600;font-family:'Cormorant Garamond',serif">${p.titulo}</div>
+              <div style="display:flex;gap:6px;margin-top:4px">${estadoBadge(p.estado)}<span style="font-size:10px;color:var(--muted)">${p.autores||''}</span></div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
 function toggleSidebar(){
   document.querySelector('.sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('open');
@@ -2146,24 +2443,14 @@ function closeSidebar(){
 function spFallback(containerId, playlistId){
   const el = document.getElementById(containerId);
   if(!el) return;
+  // Silent fallback — just show open in Spotify button
   el.innerHTML = `<div style="height:352px;background:var(--teal-pale);border-radius:8px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center">
-    <div style="font-size:32px">🎵</div>
-    <div style="font-size:12px;font-weight:600;color:var(--teal-dark)">Spotify no puede cargar aquí</div>
-    <div style="font-size:11px;color:var(--muted);line-height:1.6">El embed de Spotify requiere un servidor web.<br>Funcionará en GitHub Pages.</div>
-    <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank" style="background:var(--teal);color:var(--white);padding:8px 18px;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none">▶ Abrir en Spotify</a>
+    <div style="font-size:48px">🎵</div>
+    <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank" style="background:var(--teal);color:var(--white);padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;text-decoration:none">▶ Abrir playlist en Spotify</a>
   </div>`;
 }
 
-// Check on load if we're running locally and show notice
-window.addEventListener('load', ()=>{
-  if(window.location.protocol === 'file:' || window.location.hostname === ''){
-    const notice = document.getElementById('spotify-notice');
-    if(notice) notice.style.display='flex';
-  } else {
-    const notice = document.getElementById('spotify-notice');
-    if(notice) notice.style.display='none';
-  }
-});
+
 
 // ════════════════════════════════════════════════════════════
 // TOAST
