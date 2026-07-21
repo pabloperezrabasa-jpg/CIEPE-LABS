@@ -678,56 +678,17 @@ function saveLabData(lab, data){
 // ════════════════════════════════════════════════════════════
 // LAB VISUAL IDENTITY — banner gradients + icons per lab
 // ════════════════════════════════════════════════════════════
-const LAB_IDENTITY = {
-  bioetica:{
-    gradient:'linear-gradient(135deg,#0A2E30 0%,#1B5E6E 40%,#2E7D6B 70%,#1A4A3A 100%)',
-    icon:'🧬', accent:'#2E7D6B',
-    desc:'Ética biomédica · Retos contemporáneos'
-  },
-  crimen:{
-    gradient:'linear-gradient(135deg,#1A1A2E 0%,#16213E 35%,#0F3460 65%,#533483 100%)',
-    icon:'📡', accent:'#0F3460',
-    desc:'Criminología · Comunicación · Percepción pública'
-  },
-  educacion:{
-    gradient:'linear-gradient(135deg,#1B4332 0%,#2D6A4F 40%,#40916C 70%,#1B4332 100%)',
-    icon:'🎓', accent:'#2D6A4F',
-    desc:'Educación · Liderazgo · Justicia social'
-  },
-  riesgo:{
-    gradient:'linear-gradient(135deg,#3D0000 0%,#7B1818 35%,#A0522D 65%,#6B3A2A 100%)',
-    icon:'⚠️', accent:'#7B1818',
-    desc:'Filosofía del riesgo · Justicia epistémica'
-  },
-  ciencias:{
-    gradient:'linear-gradient(135deg,#0D1B2A 0%,#1B3A5C 40%,#2E5984 70%,#0D1B2A 100%)',
-    icon:'🔭', accent:'#2E5984',
-    desc:'Filosofía · Ética · Educación en ciencias'
-  },
-  ia:{
-    gradient:'linear-gradient(135deg,#0A0A1A 0%,#1A1040 40%,#2D1B69 65%,#4A1080 100%)',
-    icon:'🤖', accent:'#2D1B69',
-    desc:'Inteligencia artificial · Derecho · Filosofía'
-  },
-  etica:{
-    gradient:'linear-gradient(135deg,#2C1810 0%,#5D3A1A 40%,#8B6914 70%,#4A3000 100%)',
-    icon:'💡', accent:'#8B6914',
-    desc:'Ética aplicada · Teoría del conocimiento'
-  },
-  linpae:{
-    gradient:'linear-gradient(135deg,#1A0A2E 0%,#2E1760 35%,#4A2080 60%,#C4993A 100%)',
-    icon:'📜', accent:'#C4993A',
-    desc:'Pensamiento económico austriaco · Escolástica hispana'
-  },
-  admin:{
-    gradient:'linear-gradient(135deg,#0F4446 0%,#17666A 40%,#C4993A 100%)',
-    icon:'🏛️', accent:'#C4993A',
-    desc:'Coordinación Académica · CIEPE'
-  }
-};
+// LAB_IDENTITY defined dynamically above
 
 
-const LAB_NAMES = {
+
+// ════════════════════════════════════════════════════════════
+// LABS DINÁMICOS — cargados desde Firestore config/labs
+// Para agregar/quitar labs: Firebase Console → config → labs
+// ════════════════════════════════════════════════════════════
+
+// Defaults hardcoded (fallback si Firestore no responde)
+const LAB_NAMES_DEFAULT = {
   bioetica:'Bioética aplicada y retos del siglo XXI',
   crimen:'Crimen, comunicación y percepción pública',
   educacion:'Educación, liderazgo y justicia social',
@@ -738,6 +699,54 @@ const LAB_NAMES = {
   linpae:'LINPAE — Pensamiento Económico Austriaco',
   admin:'Coordinación Académica'
 };
+
+const LAB_IDENTITY_DEFAULT = {
+  bioetica:{gradient:'linear-gradient(135deg,#0A2E30 0%,#1B5E6E 40%,#2E7D6B 70%,#1A4A3A 100%)',icon:'🧬',accent:'#2E7D6B',desc:'Ética biomédica · Retos contemporáneos'},
+  crimen:{gradient:'linear-gradient(135deg,#1A1A2E 0%,#16213E 35%,#0F3460 65%,#533483 100%)',icon:'📡',accent:'#0F3460',desc:'Criminología · Comunicación · Percepción pública'},
+  educacion:{gradient:'linear-gradient(135deg,#1B4332 0%,#2D6A4F 40%,#40916C 70%,#1B4332 100%)',icon:'🎓',accent:'#2D6A4F',desc:'Educación · Liderazgo · Justicia social'},
+  riesgo:{gradient:'linear-gradient(135deg,#3D0000 0%,#7B1818 35%,#A0522D 65%,#6B3A2A 100%)',icon:'⚠️',accent:'#7B1818',desc:'Filosofía del riesgo · Justicia epistémica'},
+  ciencias:{gradient:'linear-gradient(135deg,#0D1B2A 0%,#1B3A5C 40%,#2E5984 70%,#0D1B2A 100%)',icon:'🔭',accent:'#2E5984',desc:'Filosofía · Ética · Educación en ciencias'},
+  ia:{gradient:'linear-gradient(135deg,#0A0A1A 0%,#1A1040 40%,#2D1B69 65%,#4A1080 100%)',icon:'🤖',accent:'#2D1B69',desc:'Inteligencia artificial · Derecho · Filosofía'},
+  etica:{gradient:'linear-gradient(135deg,#2C1810 0%,#5D3A1A 40%,#8B6914 70%,#4A3000 100%)',icon:'💡',accent:'#8B6914',desc:'Ética aplicada · Teoría del conocimiento'},
+  linpae:{gradient:'linear-gradient(135deg,#1A0A2E 0%,#2E1760 35%,#4A2080 60%,#C4993A 100%)',icon:'📜',accent:'#C4993A',desc:'Pensamiento económico austriaco · Escolástica hispana'},
+  admin:{gradient:'linear-gradient(135deg,#0F4446 0%,#17666A 40%,#C4993A 100%)',icon:'🏛️',accent:'#C4993A',desc:'Coordinación Académica · CIEPE'}
+};
+
+// Live versions — populated from Firestore on load
+let LAB_NAMES     = {...LAB_NAMES_DEFAULT};
+let LAB_IDENTITY  = {...LAB_IDENTITY_DEFAULT};
+let ALL_LABS_LIST = ['bioetica','crimen','educacion','riesgo','ciencias','ia','etica','linpae'];
+
+async function loadLabsConfig(){
+  if(!db) return;
+  try{
+    const snap = await db.collection('config').doc('labs').get({source:'server'});
+    if(snap.exists){
+      const data = snap.data();
+      // Merge dynamic labs into LAB_NAMES and LAB_IDENTITY
+      const dynamicLabs = [];
+      Object.entries(data).forEach(([id, lab]) => {
+        if(!lab.activo) return; // skip inactive labs
+        dynamicLabs.push(id);
+        LAB_NAMES[id] = lab.nombre || id;
+        LAB_IDENTITY[id] = {
+          gradient: lab.gradient || 'linear-gradient(135deg,#0F4446,#17666A)',
+          icon:     lab.icon     || '🔬',
+          accent:   lab.accent   || '#17666A',
+          desc:     lab.desc     || ''
+        };
+      });
+      if(dynamicLabs.length > 0){
+        ALL_LABS_LIST = dynamicLabs;
+        console.log('Labs cargados desde Firestore:', dynamicLabs);
+      }
+    }
+  }catch(e){
+    console.log('Usando labs por defecto (Firestore no disponible):', e.message);
+  }
+}
+
+
 
 const SEC_TITLES = {
   backlog:'Backlog de Tareas', papers:'Papers en Trabajo', repo:'Repositorio Temático',
@@ -879,6 +888,29 @@ function doLogout(){
   S = {lab:null,user:null,email:null,section:'backlog',data:null};
   document.getElementById('app').classList.add('hidden');
   document.getElementById('gsearch-wrap').style.display='none';
+  // Update login dropdowns with dynamic labs
+  try{
+    const labSelects = ['l-lab','r-lab'];
+    labSelects.forEach(selId => {
+      const sel = document.getElementById(selId);
+      if(!sel) return;
+      // Keep first option, rebuild the rest
+      const first = sel.options[0];
+      sel.innerHTML = '';
+      sel.appendChild(first);
+      ALL_LABS_LIST.forEach(labId => {
+        const opt = document.createElement('option');
+        opt.value = labId;
+        opt.textContent = (LAB_IDENTITY[labId]?.icon||'🔬') + ' ' + (LAB_NAMES[labId]||labId);
+        sel.appendChild(opt);
+      });
+      // Add admin option at end
+      const adminOpt = document.createElement('option');
+      adminOpt.value = 'admin';
+      adminOpt.textContent = '🏛️ Coordinación Académica (admin)';
+      sel.appendChild(adminOpt);
+    });
+  }catch(e){}
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('l-pass').value='';
   showMsg('login-msg','Sesión cerrada.','success');
@@ -923,6 +955,8 @@ async function startApp(session){
 // Auto-login via Firebase session persistence
 if(auth){
 auth.onAuthStateChanged(async function(user){
+  // Load dynamic labs config first
+  await loadLabsConfig();
   if(user){
     try{
       // Force fresh read from server, not cache
@@ -2206,7 +2240,7 @@ function exportInformePDF(){
 // ════════════════════════════════════════════════════════════
 // PANEL DE COORDINACIÓN ACADÉMICA
 // ════════════════════════════════════════════════════════════
-const ALL_LABS = ['bioetica','crimen','educacion','riesgo','ciencias','ia','etica','linpae'];
+// ALL_LABS_LIST is now defined dynamically in loadLabsConfig()
 
 function renderAdminSidebar(){
   const nav = document.querySelector('.sidebar-nav');
@@ -2216,7 +2250,7 @@ function renderAdminSidebar(){
     <div class="nav-item active" onclick="goToAdmin('dashboard',this)"><span class="ni">📊</span><span class="nl">Dashboard general</span></div>
     <div class="nav-item" onclick="goToAdmin('informes',this)"><span class="ni">📋</span><span class="nl">Informes consolidados</span></div>
     <div class="nav-group"><div class="nav-group-label">Acceso a laboratorios</div></div>
-    ${ALL_LABS.map(lab=>`
+    ${ALL_LABS_LIST.map(lab=>`
       <div class="nav-item" onclick="goToAdminLab('${lab}',this)">
         <span class="ni">${LAB_IDENTITY[lab]?.icon||'🔬'}</span>
         <span class="nl" style="font-size:11px">${LAB_NAMES[lab]?.split('—')[0].trim()||lab}</span>
@@ -2279,11 +2313,11 @@ async function renderAdminDashboard(el){
   </div>`;
 
   // Load all labs data in parallel
-  const allData = await Promise.all(ALL_LABS.map(lab => getLabData(lab)));
+  const allData = await Promise.all(ALL_LABS_LIST.map(lab => getLabData(lab)));
   const grid = document.getElementById('admin-lab-grid');
   if(!grid) return;
 
-  grid.innerHTML = ALL_LABS.map((lab, i) => {
+  grid.innerHTML = ALL_LABS_LIST.map((lab, i) => {
     const d = allData[i];
     const id = LAB_IDENTITY[lab] || LAB_IDENTITY.admin;
     const tareas = (d.backlog||[]).length;
@@ -2365,9 +2399,9 @@ async function loadAdminInformes(year, trim, el, type){
   body.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Cargando...</p></div>';
 
   const trimLabel = TRIMESTRES.find(t=>t.id===_adminTrim)?.label || _adminTrim;
-  const allData = await Promise.all(ALL_LABS.map(lab => getLabData(lab)));
+  const allData = await Promise.all(ALL_LABS_LIST.map(lab => getLabData(lab)));
 
-  body.innerHTML = ALL_LABS.map((lab, i) => {
+  body.innerHTML = ALL_LABS_LIST.map((lab, i) => {
     const d = allData[i];
     const id = LAB_IDENTITY[lab]||LAB_IDENTITY.admin;
     const secciones = INFORME_SECCIONES.map(s => {
