@@ -651,11 +651,18 @@ const EMPTY_LAB_DATA = () => ({
 
 async function getLabData(lab){
   const empty = EMPTY_LAB_DATA();
+  if(!db) return empty;
   try{
-    const doc = await db.collection('labs').doc(lab).get();
+    // Try fresh from server first
+    const doc = await db.collection('labs').doc(lab).get({source:'server'});
     if(doc.exists) return {...empty, ...doc.data()};
+    return empty;
   }catch(e){
-    // Offline fallback
+    // Offline fallback — try cache then localStorage
+    try{
+      const doc = await db.collection('labs').doc(lab).get();
+      if(doc.exists) return {...empty, ...doc.data()};
+    }catch(e2){}
     const raw = localStorage.getItem('ciepe_offline_'+lab);
     if(raw) return {...empty, ...JSON.parse(raw)};
   }
@@ -812,7 +819,7 @@ async function doLogin(){
   if(!auth){ showMsg('login-msg','⚠️ Abrí la app desde GitHub Pages para usar Firebase.'); return; }
   try{
     const cred = await auth.signInWithEmailAndPassword(email, pass);
-    const profileDoc = await db.collection('usuarios').doc(cred.user.uid).get();
+    const profileDoc = await db.collection('usuarios').doc(cred.user.uid).get({source:'server'});
     if(profileDoc.exists){
       const p = profileDoc.data();
       if(p.lab !== lab && lab !== 'admin'){
@@ -891,6 +898,7 @@ async function startApp(session){
   if(initEl) initEl.textContent = initials(S.user);
   document.getElementById('topbar-lab').textContent = LAB_NAMES[S.lab]||S.lab;
   showToast('Cargando datos...');
+  // Always get fresh data on login
   S.data = await getLabData(S.lab);
   // Restore avatar
   try{
@@ -917,13 +925,24 @@ if(auth){
 auth.onAuthStateChanged(async function(user){
   if(user){
     try{
-      const pd = await db.collection('usuarios').doc(user.uid).get();
+      // Force fresh read from server, not cache
+      const pd = await db.collection('usuarios').doc(user.uid).get({source:'server'});
       if(pd.exists){
         const p = pd.data();
         await startApp({lab:p.lab, nombre:p.nombre, email:user.email});
         return;
       }
-    }catch(e){ console.log('Auto-login error:', e); }
+    }catch(e){
+      // If server fetch fails (offline), try cache
+      try{
+        const pd = await db.collection('usuarios').doc(user.uid).get();
+        if(pd.exists){
+          const p = pd.data();
+          await startApp({lab:p.lab, nombre:p.nombre, email:user.email});
+          return;
+        }
+      }catch(e2){ console.log('Auto-login error:', e2); }
+    }
   }
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app').classList.add('hidden');
